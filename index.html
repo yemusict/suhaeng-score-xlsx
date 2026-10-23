@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="학년·학급·평가 영역과 세부항목 배점을 정하면 반별 시트에 합계·평균 수식과 점수 선택 목록이 들어간 엑셀 파일을 만들어 주는 교사용 웹앱">
+<meta property="og:title" content="수행평가 점수 입력 엑셀 양식 생성기">
+<meta property="og:description" content="반별 시트 · 영역별 합계 · 평균 · 점수 선택 목록까지 한 번에. @yemusict">
+<meta property="og:type" content="website">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>수행평가 점수 입력 엑셀 양식 생성기</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: 왼쪽은 설정 장부(3단계), 오른쪽은 실제 시트와 같은 모양의 미리보기 + 내려받기 */
+:root{
+  --bg:#f3f6f4; --paper:#ffffff; --ink:#18241f; --muted:#5d6c65; --line:#d5dfda; --line-strong:#a9bab2;
+  --green:#245c49; --green-soft:#e1ede7; --green-tint:#f0f6f3;
+  --pen:#c8412b; --pen-soft:#fbe8e3;
+  --g1:#245c49; --g1s:#e4f0ea; --g2:#2b4f8a; --g2s:#e5ecf7; --g3:#8a4b1f; --g3s:#f6ebe0;
+  /* 평가 영역 열 색: h 머리글, c 점수 칸, sh 소계 머리글, s 소계 칸 (엑셀과 같은 값) */
+  --a1h:#dcefe3; --a1c:#f4faf6; --a1sh:#c2e1cd; --a1s:#e6f3ea;
+  --a2h:#dce8f7; --a2c:#f4f8fd; --a2sh:#c3d6f0; --a2s:#e5eefa;
+  --a3h:#fcefcf; --a3c:#fffbf0; --a3sh:#f6dd9e; --a3s:#fdf3d8;
+  --a4h:#eae1f5; --a4c:#f8f5fc; --a4sh:#d7c8ec; --a4s:#f0eaf8;
+  --a5h:#d6f0ee; --a5c:#f3fbfa; --a5sh:#b9e2de; --a5s:#e3f5f3;
+  --a6h:#f3e4d6; --a6c:#fcf7f2; --a6sh:#e6cbb2; --a6s:#f8ede3;
+  --display:"Do Hyeon","IBM Plex Sans KR","Malgun Gothic",sans-serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111815; --paper:#18211d; --ink:#e4ece8; --muted:#9aaba3; --line:#2c3933; --line-strong:#465850;
+  --green:#7cc4a6; --green-soft:#1f3a30; --green-tint:#1a2a24; --pen:#f08a74; --pen-soft:#3a221d;
+  --g1:#7cc4a6; --g1s:#1c3029; --g2:#93b3e8; --g2s:#1b2638; --g3:#e3aa7c; --g3s:#33261a;
+  --a1h:#213a2d; --a1c:#18241e; --a1sh:#2c4d3b; --a1s:#1d2e25;
+  --a2h:#1f2e45; --a2c:#171f2c; --a2sh:#2a3e5c; --a2s:#1b2638;
+  --a3h:#3d3218; --a3c:#241f14; --a3sh:#54441c; --a3s:#2e2817;
+  --a4h:#2f2540; --a4c:#1f1a29; --a4sh:#3f3157; --a4s:#271f33;
+  --a5h:#173b38; --a5c:#142624; --a5sh:#1f504c; --a5s:#182f2d;
+  --a6h:#3b2c1f; --a6c:#251e17; --a6sh:#50392a; --a6s:#2e241b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111815; --paper:#18211d; --ink:#e4ece8; --muted:#9aaba3; --line:#2c3933; --line-strong:#465850;
+  --green:#7cc4a6; --green-soft:#1f3a30; --green-tint:#1a2a24; --pen:#f08a74; --pen-soft:#3a221d;
+  --g1:#7cc4a6; --g1s:#1c3029; --g2:#93b3e8; --g2s:#1b2638; --g3:#e3aa7c; --g3s:#33261a;
+  --a1h:#213a2d; --a1c:#18241e; --a1sh:#2c4d3b; --a1s:#1d2e25;
+  --a2h:#1f2e45; --a2c:#171f2c; --a2sh:#2a3e5c; --a2s:#1b2638;
+  --a3h:#3d3218; --a3c:#241f14; --a3sh:#54441c; --a3s:#2e2817;
+  --a4h:#2f2540; --a4c:#1f1a29; --a4sh:#3f3157; --a4s:#271f33;
+  --a5h:#173b38; --a5c:#142624; --a5sh:#1f504c; --a5s:#182f2d;
+  --a6h:#3b2c1f; --a6c:#251e17; --a6sh:#50392a; --a6s:#2e241b; color-scheme:dark}
+.ar1{--ah:var(--a1h);--ac:var(--a1c);--ash:var(--a1sh);--as:var(--a1s)}
+.ar2{--ah:var(--a2h);--ac:var(--a2c);--ash:var(--a2sh);--as:var(--a2s)}
+.ar3{--ah:var(--a3h);--ac:var(--a3c);--ash:var(--a3sh);--as:var(--a3s)}
+.ar4{--ah:var(--a4h);--ac:var(--a4c);--ash:var(--a4sh);--as:var(--a4s)}
+.ar5{--ah:var(--a5h);--ac:var(--a5c);--ash:var(--a5sh);--as:var(--a5s)}
+.ar6{--ah:var(--a6h);--ac:var(--a6c);--ash:var(--a6sh);--as:var(--a6s)}
+.gc1{--gc:var(--g1);--gcs:var(--g1s)} .gc2{--gc:var(--g2);--gcs:var(--g2s)} .gc3{--gc:var(--g3);--gcs:var(--g3s)}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;border-bottom:2px solid var(--ink);padding-bottom:14px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,4vw,38px);line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1 .mark{color:var(--pen)}
+.lead{margin:6px 0 0;color:var(--muted);max-width:60ch}
+.stats{display:flex;flex-wrap:wrap;gap:8px}
+.stat{font-family:var(--mono);font-size:13px;border:1px solid var(--line-strong);border-radius:4px;padding:4px 10px;background:var(--paper);font-variant-numeric:tabular-nums}
+.stat b{font-weight:600;color:var(--green)}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
+@media (min-width:1040px){.grid{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+
+.step{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.step-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.step-h h2{white-space:nowrap}
+.step-no{white-space:nowrap;flex:none;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--paper);background:var(--green);border-radius:3px;padding:2px 7px}
+.step-h h2{font-family:var(--display);font-weight:400;font-size:22px;margin:0}
+.step-h .hint{margin-left:auto;font-size:13px;color:var(--muted)}
+
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:500;color:var(--muted);min-width:0}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line-strong);border-radius:4px;padding:7px 9px;min-width:0;width:100%}
+input[type=number]{font-family:var(--mono);font-variant-numeric:tabular-nums}
+textarea{font-family:var(--mono);font-size:13px;min-height:132px;resize:vertical;line-height:1.5}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--pen);outline-offset:1px}
+.check{display:flex;align-items:center;gap:8px;font-size:14px}
+.check input{width:auto}
+
+button{font:inherit;cursor:pointer;border-radius:4px}
+.btn{border:1px solid var(--line-strong);background:var(--paper);color:var(--ink);padding:6px 12px;font-size:14px}
+.btn:hover{border-color:var(--green);color:var(--green)}
+.btn.ghost{border-style:dashed}
+.btn.danger:hover{border-color:var(--pen);color:var(--pen)}
+.btn.icon{padding:4px 9px;line-height:1}
+
+/* 학년 카드: 고르는 버튼이자 학년별 수행평가 한눈에 보기 */
+.gcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.gcard{text-align:left;border:1px solid var(--line-strong);background:var(--paper);padding:12px 14px 12px 18px;border-radius:6px;
+  display:flex;flex-direction:column;gap:6px;position:relative;color:var(--ink);min-width:0}
+.gcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;border-radius:6px 0 0 6px;background:var(--gc)}
+.gcard:hover{border-color:var(--gc)}
+.gcard[aria-selected="true"]{border:2px solid var(--gc);background:var(--gcs);padding:11px 13px 11px 17px}
+.gcard .gname{display:flex;align-items:baseline;gap:8px}
+.gcard .gname b{font-family:var(--display);font-weight:400;font-size:24px;color:var(--gc);line-height:1}
+.gcard .gname span{font-size:12px;color:var(--muted)}
+.gcard .gname .now{margin-left:auto;font-size:11px;font-weight:700;color:var(--paper);background:var(--gc);border-radius:3px;padding:1px 6px}
+.gcard ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;font-size:13px}
+.gcard li{display:flex;gap:6px}
+.gcard li em{font-style:normal;margin-left:auto;font-family:var(--mono);color:var(--muted)}
+.gcard .gsum{border-top:1px dashed var(--line-strong);padding-top:5px;font-size:13px;display:flex}
+.gcard .gsum b{margin-left:auto;font-family:var(--mono);color:var(--gc)}
+.gadd{border:1px dashed var(--line-strong);background:transparent;color:var(--muted);border-radius:6px;padding:12px;font-weight:600;min-height:88px}
+.gadd:hover{color:var(--ink);border-color:var(--ink)}
+
+.zone{border:2px solid var(--gc);background:var(--gcs);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.zone-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.zone-h .badge{font-family:var(--display);font-size:22px;color:var(--paper);background:var(--gc);border-radius:5px;padding:2px 12px;line-height:1.4}
+.zone-h p{margin:0;font-size:14px}
+.zone-h .warn{color:var(--pen);font-weight:600;font-size:13px}
+.zone .step-no{background:var(--gc)}
+.zone .step-h .gtag{font-size:13px;font-weight:700;color:var(--gc)}
+
+.roster{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.roster-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.roster-top select{width:auto}
+.note{font-size:13px;color:var(--muted);margin:0}
+.note code{font-family:var(--mono);background:var(--green-tint);padding:0 4px;border-radius:3px}
+
+.area{border:1px solid var(--line);border-left:8px solid var(--ash,var(--line));border-radius:5px;overflow:hidden}
+.area-h .acol{font-size:11px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:4px}
+.area-h .acol i{width:12px;height:12px;border-radius:2px;background:var(--ash);display:inline-block}
+@media (max-width:560px){.area-h .acol{display:none}}
+.area-h{display:flex;gap:8px;align-items:center;background:var(--ah,var(--green-tint));padding:10px 12px;border-bottom:1px solid var(--line)}
+.area-h input{font-weight:600;max-width:220px}
+.area-h .tot{margin-left:auto;font-family:var(--mono);font-size:13px;white-space:nowrap}
+.area-h .tot b{color:var(--gc,var(--green))}
+.zone .chip.top{border-color:var(--gc);color:var(--gc)}
+.row-end select{width:auto}
+.items{display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(58px,.8fr)) auto;gap:8px;align-items:end;padding:10px 12px;border-bottom:1px dashed var(--line)}
+.item label.f{font-size:12px}
+.chips{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px;color:var(--muted)}
+.chip{font-family:var(--mono);font-size:12px;border:1px solid var(--line-strong);border-radius:3px;padding:0 6px;color:var(--ink);background:var(--paper);font-variant-numeric:tabular-nums}
+.chip.top{border-color:var(--green);color:var(--green);font-weight:600}
+.chip.zero{border-style:dashed}
+.err{color:var(--pen);font-weight:500}
+.area-f{display:flex;gap:8px;padding:10px 12px}
+@media (max-width:560px){
+  .item{grid-template-columns:repeat(3,minmax(0,1fr)) auto}
+  .item .name{grid-column:1/-1}
+}
+.row-end{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row-end .sp{flex:1}
+.gtot{font-family:var(--mono);font-size:14px}
+.gtot b{color:var(--pen);font-size:16px}
+
+/* preview */
+.pv{position:static}
+@media (min-width:1040px){.pv{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}}
+.pv-card{background:var(--paper);border:1px solid var(--line);border-radius:6px;display:flex;flex-direction:column;min-width:0}
+.pv-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.pv-bar h2{font-family:var(--display);font-weight:400;font-size:22px;margin:0}
+.pv-bar select{width:auto}
+.pv-bar .sp{flex:1}
+.sheet-tabs{display:flex;gap:2px;overflow-x:auto;padding:0 12px;background:var(--green-tint);border-top:1px solid var(--line)}
+.sheet-tab{border:0;border-radius:0 0 4px 4px;background:transparent;padding:5px 12px;font-size:12px;color:var(--muted);white-space:nowrap}
+.sheet-tab{color:var(--gc)}
+.sheet-tab[aria-selected="true"]{background:var(--paper);color:var(--gc);font-weight:700;box-shadow:inset 0 -3px 0 var(--gc)}
+.sheet-sep{width:1px;background:var(--line-strong);margin:6px 4px;flex:none}
+.pv-grade{font-size:12px;font-weight:700;color:var(--paper);background:var(--gc);border-radius:3px;padding:1px 7px;margin-left:16px;display:inline-block}
+.sheet{overflow:auto;max-height:560px}
+.sheet-title{padding:12px 16px 4px;font-weight:700;font-size:16px}
+.sheet-sub{padding:0 16px 10px;font-size:13px;color:var(--muted)}
+table.x{border-collapse:collapse;font-size:12.5px;margin:0 16px 12px;font-variant-numeric:tabular-nums}
+table.x th,table.x td{border:1px solid var(--line-strong);padding:4px 6px;text-align:center;white-space:nowrap}
+table.x thead th{background:var(--green-soft);font-weight:600;position:sticky;top:0}
+table.x thead tr:nth-child(2) th{top:29px}
+table.x thead tr:nth-child(3) th{top:58px;font-weight:400;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+table.x .sum{background:var(--green-tint);font-weight:600}
+table.x thead .sum{background:var(--green-soft)}
+table.x thead th.ar{background:var(--ah)}
+table.x thead th.ar.sum,table.x thead th.ar.top{background:var(--ash)}
+table.x td.ar{background:var(--ac)}
+table.x td.ar.sum{background:var(--as)}
+table.x tfoot td.ar{background:var(--ah)}
+table.x tfoot td.ar.sum{background:var(--ash)}
+table.x .total{background:var(--pen-soft);font-weight:700;color:var(--pen)}
+table.x td.name{text-align:left;min-width:70px}
+table.x td.ph{color:var(--line-strong)}
+table.x td.num{font-family:var(--mono)}
+table.x tfoot td{background:var(--green-soft);font-weight:700;font-family:var(--mono)}
+table.x tfoot td:first-child{font-family:var(--body)}
+.sig{font-size:11px;color:var(--muted);padding:0 16px 12px;font-family:var(--mono)}
+.dl{display:flex;flex-direction:column;gap:8px;padding:16px;border-top:1px solid var(--line)}
+.dl-btn{background:var(--green);color:var(--paper);border:0;padding:13px 18px;font-size:16px;font-weight:700;border-radius:5px;display:flex;justify-content:center;gap:8px;align-items:center}
+.dl-btn:hover{filter:brightness(1.08)}
+.dl-btn:disabled{opacity:.6;cursor:progress}
+.status{font-size:13px;color:var(--muted);margin:0;min-height:1.4em}
+.status.ok{color:var(--green)}
+.status.bad{color:var(--pen)}
+footer.foot{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>수행평가 점수 입력 <span class="mark">엑셀 양식</span> 생성기</h1>
+      <p class="lead">학급 명렬과 평가 영역, 세부항목 배점만 정하면 반별 시트에 합계·평균 수식과 점수 선택 목록이 들어간 엑셀 파일을 만들어 줍니다. 입력한 내용은 이 브라우저에만 저장됩니다.</p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+      <section class="step" aria-labelledby="s1">
+        <div class="step-h"><span class="step-no">STEP 1</span><h2 id="s1">기본 정보</h2></div>
+        <div class="fields">
+          <label class="f">학년도<input id="f-year" type="number" data-f="base" data-k="year" min="2000" max="2100"></label>
+          <label class="f">학교명<input id="f-school" type="text" data-f="base" data-k="school" placeholder="예: 한빛중학교"></label>
+          <label class="f">교과<input id="f-subject" type="text" data-f="base" data-k="subject" placeholder="예: 음악"></label>
+          <label class="f">담당 교사<input id="f-teacher" type="text" data-f="base" data-k="teacher" placeholder="선택"></label>
+        </div>
+        <label class="check"><input id="f-zero" type="checkbox" data-f="base" data-k="allowZero"> 점수 선택 목록에 0점(미응시·미제출) 포함</label>
+      </section>
+
+      <section class="step" aria-labelledby="s2">
+        <div class="step-h"><span class="step-no">STEP 2</span><h2 id="s2">학년 고르기</h2><span class="hint">학년마다 수행평가를 따로 정해요</span></div>
+        <p class="note">수업 들어가는 학년을 모두 추가하고, 카드를 눌러 그 학년의 학급과 수행평가를 설정하세요.</p>
+        <div class="gcards" id="gradeTabs" role="tablist" aria-label="학년"></div>
+      </section>
+
+      <div class="zone" id="zone">
+        <div class="zone-h" id="zoneH"></div>
+        <section class="step" aria-labelledby="s3">
+          <div class="step-h"><span class="step-no">STEP 3</span><h2 id="s3">학급·명렬</h2><span class="gtag" id="s3tag"></span></div>
+          <div id="gradePanel"></div>
+        </section>
+        <section class="step" aria-labelledby="s4">
+          <div class="step-h"><span class="step-no">STEP 4</span><h2 id="s4">평가 영역과 세부항목</h2><span class="gtag" id="s3hint"></span></div>
+          <div id="areaPanel" class="col"></div>
+        </section>
+      </div>
+    </div>
+
+    <aside class="col pv">
+      <div class="pv-card">
+        <div class="pv-bar">
+          <h2>미리보기</h2>
+          <span class="sp"></span>
+          <label class="check"><input id="pv-sample" type="checkbox" checked> 예시 점수 넣어 보기</label>
+        </div>
+        <div class="sheet" id="sheet"></div>
+        <div class="sheet-tabs" id="sheetTabs" role="tablist" aria-label="시트"></div>
+        <div class="dl">
+          <button class="dl-btn" id="dlBtn" type="button">엑셀 파일 내려받기 (.xlsx)</button>
+          <p class="status" id="status" role="status">반마다 시트 하나씩, 모두 한 파일에 담깁니다.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+  <footer class="foot">@yemusict</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script>
+(function(){
+const KEY='suhaeng-xlsx-v1';
+const DEFAULT={year:new Date().getFullYear(),school:'한빛중학교',subject:'음악',teacher:'',allowZero:false,
+  grades:[
+    {grade:1,classes:4,students:28,rosters:{},areas:[
+      {name:'가창',items:[{name:'음정·박자',max:10,min:4,step:2},{name:'발성·표현',max:10,min:4,step:2}]},
+      {name:'기악',items:[{name:'리코더 연주',max:20,min:8,step:3}]},
+      {name:'감상문',items:[{name:'내용 이해',max:5,min:1,step:1},{name:'느낌 표현',max:5,min:1,step:1}]}]},
+    {grade:2,classes:5,students:27,rosters:{},areas:[
+      {name:'합창',items:[{name:'화음 유지',max:15,min:6,step:3},{name:'협동·태도',max:5,min:1,step:1}]},
+      {name:'창작',items:[{name:'가락 짓기',max:20,min:8,step:4},{name:'악보 기보',max:10,min:4,step:2}]}]}
+  ]};
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+if(!S||!Array.isArray(S.grades)||!S.grades.length)S=JSON.parse(JSON.stringify(DEFAULT));
+const ui={g:0,rosterCls:{},pv:'0-1'};
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>{const n=parseFloat(v);return isFinite(n)?n:NaN};
+const r2=v=>Math.round(v*100)/100;
+const intIn=(v,lo,hi,d)=>{const n=parseInt(v,10);return isFinite(n)?Math.min(hi,Math.max(lo,n)):d};
+let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}},250)}
+
+/* ---------- 계산 ---------- */
+function scoreList(it){
+  const max=num(it.max),min=num(it.min),step=num(it.step);
+  if(!isFinite(max)||!isFinite(min)||!isFinite(step))return {err:'숫자를 모두 입력하세요'};
+  if(step<=0)return {err:'급간은 0보다 커야 해요'};
+  if(max<min)return {err:'최고 점수가 최저 점수보다 작아요'};
+  const a=[];
+  for(let v=max;v>=min-1e-9&&a.length<80;v=r2(v-step))a.push(r2(v));
+  if(a.length>=80)return {err:'점수 칸이 너무 많아요. 급간을 키워 주세요'};
+  if(a[a.length-1]!==r2(min))a.push(r2(min));
+  if(S.allowZero&&!a.includes(0))a.push(0);
+  return {list:a};
+}
+function parseRoster(text){
+  const out=[];let auto=1;
+  String(text||'').split(/\r?\n/).forEach(line=>{
+    const t=line.trim();if(!t)return;
+    const m=t.match(/^(\d{1,3})\s*[\t ,.)\-]\s*(.+)$/);
+    if(m){out.push({no:+m[1],name:m[2].trim()});auto=+m[1]+1}
+    else if(/^\d{1,3}$/.test(t)){out.push({no:+t,name:''});auto=+t+1}
+    else{out.push({no:auto++,name:t})}
+  });
+  return out;
+}
+function students(g,c){
+  const r=parseRoster(g.rosters&&g.rosters[c]);
+  if(r.length)return r;
+  const n=intIn(g.students,1,60,25);
+  return Array.from({length:n},(_,i)=>({no:i+1,name:''}));
+}
+function areaMax(a){return r2(a.items.reduce((s,it)=>s+(num(it.max)||0),0))}
+function gradeMax(g){return r2(g.areas.reduce((s,a)=>s+areaMax(a),0))}
+function classes(g){return intIn(g.classes,1,20,1)}
+
+/* ---------- 상단 요약 ---------- */
+function renderStats(){
+  let sheets=0,kids=0;
+  S.grades.forEach(g=>{for(let c=1;c<=classes(g);c++){sheets++;kids+=students(g,c).length}});
+  $('stats').innerHTML=`<span class="stat">시트 <b>${sheets}</b>개</span><span class="stat">학생 <b>${kids}</b>명</span>`+
+    S.grades.map(g=>`<span class="stat">${esc(g.grade)}학년 만점 <b>${gradeMax(g)}</b></span>`).join('');
+}
+
+/* ---------- STEP 2 ---------- */
+function gcls(g){return 'gc'+Math.min(3,Math.max(1,+g.grade||1))}
+function renderTabs(){
+  $('gradeTabs').innerHTML=S.grades.map((g,i)=>{const on=i===ui.g;
+    return `<button type="button" class="gcard ${gcls(g)}" role="tab" aria-selected="${on}" data-act="tab" data-gi="${i}">
+      <span class="gname"><b>${esc(g.grade)}학년</b><span>${classes(g)}개 반</span>${on?'<span class="now">설정 중</span>':''}</span>
+      <ul>${g.areas.map(a=>`<li><span>${esc(a.name||'영역')}</span><em>${areaMax(a)}</em></li>`).join('')}</ul>
+      <span class="gsum">수행평가 ${g.areas.length}개 영역<b>${gradeMax(g)}점</b></span></button>`}).join('')+
+    (S.grades.length<3?`<button type="button" class="gadd" data-act="addGrade">+ 학년 추가</button>`:'');
+  const g=S.grades[ui.g];
+  $('zone').className='zone '+gcls(g);
+  const dup=S.grades.filter(x=>+x.grade===+g.grade).length>1;
+  $('zoneH').innerHTML=`<span class="badge">${esc(g.grade)}학년</span><p>아래 학급과 수행평가는 <b>${esc(g.grade)}학년 ${classes(g)}개 반</b>에만 적용돼요.</p>`+
+    (dup?`<span class="warn">${esc(g.grade)}학년 설정이 두 개 있어요. STEP 3에서 학년을 바꿔 주세요.</span>`:'');
+  $('s3tag').textContent=`${g.grade}학년`;
+}
+function renderGradePanel(){
+  const g=S.grades[ui.g];
+  const rc=Math.min(ui.rosterCls[ui.g]||1,classes(g));
+  ui.rosterCls[ui.g]=rc;
+  $('gradePanel').innerHTML=`
+  <div class="col">
+    <div class="fields">
+      <label class="f">학년<select id="g-grade" data-f="grade" data-k="grade">${[1,2,3].map(n=>`<option value="${n}" ${+g.grade===n?'selected':''}>${n}학년</option>`).join('')}</select></label>
+      <label class="f">수업 들어가는 학급 수<input id="g-classes" type="number" min="1" max="20" data-f="grade" data-k="classes" value="${esc(g.classes)}"></label>
+      <label class="f">기본 학생 수 (명렬 없을 때)<input id="g-students" type="number" min="1" max="60" data-f="grade" data-k="students" value="${esc(g.students)}"></label>
+    </div>
+    <div class="roster">
+      <div class="roster-top">
+        <label class="f" style="flex-direction:row;align-items:center;gap:8px">명렬 붙여넣기
+          <select id="g-rcls" data-act="rcls">${rosterOpts(g,rc)}</select></label>
+        <span class="sp" style="flex:1"></span>
+        <button type="button" class="btn" data-act="clearRoster">이 반 명렬 비우기</button>
+      </div>
+      <textarea id="g-roster" data-f="roster" placeholder="나이스나 엑셀에서 번호·이름 두 열을 복사해 붙여넣으세요.&#10;1&#9;김하늘&#10;2&#9;박도윤&#10;이름만 한 줄씩 넣어도 번호가 자동으로 붙어요.">${esc((g.rosters||{})[rc]||'')}</textarea>
+      <p class="note">비워 두면 번호만 있는 빈 칸이 <code>${intIn(g.students,1,60,25)}</code>줄 생겨요. 엑셀에서 이름을 나중에 채워도 됩니다.</p>
+    </div>
+    <div class="row-end">
+      <span class="sp"></span>
+      ${S.grades.length>1?`<button type="button" class="btn danger" data-act="delGrade">${esc(g.grade)}학년 설정 삭제</button>`:''}
+    </div>
+  </div>`;
+}
+function rosterOpts(g,sel){
+  let h='';for(let c=1;c<=classes(g);c++){const n=parseRoster((g.rosters||{})[c]).length;
+    h+=`<option value="${c}" ${c===sel?'selected':''}>${c}반 — ${n?n+'명 입력됨':'비어 있음'}</option>`}
+  return h;
+}
+
+/* ---------- STEP 3 ---------- */
+function renderAreas(){
+  const g=S.grades[ui.g];
+  $('s3hint').textContent=`${g.grade}학년 · 만점 ${gradeMax(g)}점`;
+  const others=S.grades.map((x,i)=>i).filter(i=>i!==ui.g);
+  $('areaPanel').innerHTML=g.areas.map((a,ai)=>`
+  <div class="area ${arc(ai)}">
+    <div class="area-h">
+      <input id="a-${ai}" type="text" aria-label="영역 이름" data-f="area" data-a="${ai}" value="${esc(a.name)}" placeholder="영역 이름">
+      <span class="acol" title="미리보기와 엑셀에서 이 영역 열에 칠해지는 색"><i></i>열 색</span>
+      <span class="tot" id="atot-${ai}">만점 <b>${areaMax(a)}</b>점</span>
+      <button type="button" class="btn icon danger" data-act="delArea" data-a="${ai}" aria-label="영역 삭제" title="영역 삭제">✕</button>
+    </div>
+    <div class="items">${a.items.map((it,ii)=>`
+      <div class="item">
+        <label class="f name">세부항목<input id="i-${ai}-${ii}-name" type="text" data-f="item" data-a="${ai}" data-i="${ii}" data-k="name" value="${esc(it.name)}"></label>
+        <label class="f">최고<input id="i-${ai}-${ii}-max" type="number" step="any" data-f="item" data-a="${ai}" data-i="${ii}" data-k="max" value="${esc(it.max)}"></label>
+        <label class="f">최저<input id="i-${ai}-${ii}-min" type="number" step="any" data-f="item" data-a="${ai}" data-i="${ii}" data-k="min" value="${esc(it.min)}"></label>
+        <label class="f">급간<input id="i-${ai}-${ii}-step" type="number" step="any" min="0" data-f="item" data-a="${ai}" data-i="${ii}" data-k="step" value="${esc(it.step)}"></label>
+        <button type="button" class="btn icon danger" data-act="delItem" data-a="${ai}" data-i="${ii}" aria-label="세부항목 삭제" title="세부항목 삭제" ${a.items.length<2?'disabled':''}>✕</button>
+        <div class="chips" id="chips-${ai}-${ii}">${chipsHTML(it)}</div>
+      </div>`).join('')}
+    </div>
+    <div class="area-f"><button type="button" class="btn ghost" data-act="addItem" data-a="${ai}">+ 세부항목 추가</button></div>
+  </div>`).join('')+`
+  <div class="row-end">
+    <button type="button" class="btn ghost" data-act="addArea">+ 평가 영역 추가</button>
+    ${others.length?`<select id="copyFrom" aria-label="복사할 학년">${others.map(i=>`<option value="${i}">${esc(S.grades[i].grade)}학년 수행평가</option>`).join('')}</select><button type="button" class="btn" data-act="copyAreas">그대로 가져오기</button>`:''}
+    <span class="sp"></span>
+    <span class="gtot" id="gtot">${esc(g.grade)}학년 총점 만점 <b>${gradeMax(g)}</b>점</span>
+  </div>`;
+}
+function chipsHTML(it){
+  const r=scoreList(it);
+  if(r.err)return `<span class="err">${r.err}</span>`;
+  return `<span>선택 목록</span>`+r.list.map((v,i)=>`<span class="chip${i===0?' top':''}${v===0&&S.allowZero&&i===r.list.length-1?' zero':''}">${v}</span>`).join('')+`<span>· ${r.list.length}단계</span>`;
+}
+function refreshAreaDerived(){
+  const g=S.grades[ui.g];
+  g.areas.forEach((a,ai)=>{const t=$('atot-'+ai);if(t)t.innerHTML=`만점 <b>${areaMax(a)}</b>점`;
+    a.items.forEach((it,ii)=>{const c=$(`chips-${ai}-${ii}`);if(c)c.innerHTML=chipsHTML(it)})});
+  const gt=$('gtot');if(gt)gt.innerHTML=`${esc(g.grade)}학년 총점 만점 <b>${gradeMax(g)}</b>점`;
+  $('s3hint').textContent=`${g.grade}학년 · 만점 ${gradeMax(g)}점`;
+}
+
+/* 영역 색: 영역 순서대로 6가지 색을 돌려 씀 (미리보기 CSS의 .ar1~6, 엑셀의 AP와 같은 순서) */
+function arc(ai){return 'ar'+(ai%6+1)}
+const AP=[
+  {h:'FFDCEFE3',c:'FFF4FAF6',sh:'FFC2E1CD',s:'FFE6F3EA'},
+  {h:'FFDCE8F7',c:'FFF4F8FD',sh:'FFC3D6F0',s:'FFE5EEFA'},
+  {h:'FFFCEFCF',c:'FFFFFBF0',sh:'FFF6DD9E',s:'FFFDF3D8'},
+  {h:'FFEAE1F5',c:'FFF8F5FC',sh:'FFD7C8EC',s:'FFF0EAF8'},
+  {h:'FFD6F0EE',c:'FFF3FBFA',sh:'FFB9E2DE',s:'FFE3F5F3'},
+  {h:'FFF3E4D6',c:'FFFCF7F2',sh:'FFE6CBB2',s:'FFF8EDE3'}];
+
+/* ---------- 시트 계획 (미리보기·엑셀 공용) ---------- */
+function plan(gi,c){
+  const g=S.grades[gi];
+  const areas=g.areas.map(a=>({name:a.name||'영역',max:areaMax(a),items:a.items.map(it=>({name:it.name||'항목',max:num(it.max),min:num(it.min),step:num(it.step),...scoreList(it)}))}));
+  return {g,c,areas,kids:students(g,c),grand:gradeMax(g),
+    sheetName:`${g.grade}학년 ${c}반`,
+    title:`${S.year}학년도 ${S.subject||''} 수행평가 점수표`.replace(/\s+/g,' '),
+    sub:[S.school,`${g.grade}학년 ${c}반`,S.teacher?`담당 ${S.teacher}`:''].filter(Boolean).join(' · ')};
+}
+
+/* ---------- 미리보기 ---------- */
+function pseudo(a,b){let x=Math.sin(a*12.9898+b*78.233)*43758.5453;return x-Math.floor(x)}
+function renderPreview(){
+  const keys=[];S.grades.forEach((g,gi)=>{for(let c=1;c<=classes(g);c++)keys.push(gi+'-'+c)});
+  if(!keys.includes(ui.pv))ui.pv=keys.find(k=>k.startsWith(ui.g+'-'))||keys[0];
+  let prevG=null;
+  $('sheetTabs').innerHTML=keys.map(k=>{const[gi,c]=k.split('-');const sep=prevG!==null&&prevG!==gi?'<span class="sheet-sep"></span>':'';prevG=gi;
+    return `${sep}<button type="button" class="sheet-tab ${gcls(S.grades[gi])}" role="tab" aria-selected="${k===ui.pv}" data-act="pv" data-k="${k}">${esc(S.grades[gi].grade)}학년 ${c}반</button>`}).join('');
+  const [gi,c]=ui.pv.split('-').map(Number);
+  const P=plan(gi,c);const sample=$('pv-sample').checked;
+  let h1='<tr><th rowspan="3">번호</th><th rowspan="3">이름</th>',h2='<tr>',h3='<tr>';
+  const colCls=[];
+  P.areas.forEach((a,ai)=>{const k='ar '+arc(ai);h1+=`<th colspan="${a.items.length+1}" class="${k} top">${esc(a.name)}</th>`;
+    a.items.forEach(it=>{colCls.push(k);h2+=`<th class="${k}">${esc(it.name)}</th>`;h3+=`<th class="${k}">${isFinite(it.max)?`${it.max}~${it.min} (${it.step})`:'—'}</th>`});
+    colCls.push(k+' sum');h2+=`<th class="${k} sum">소계</th>`;h3+=`<th class="${k} sum">만점 ${a.max}</th>`});
+  h1+='<th rowspan="2" class="total">총점</th></tr>';h2+='</tr>';h3+=`<th class="total">만점 ${P.grand}</th></tr>`;
+  const colVals=[];let body='';
+  P.kids.forEach((k,ri)=>{
+    const absent=sample&&pseudo(ri+c,gi+3)<.06;
+    let row=`<tr><td class="num">${k.no}</td><td class="name${k.name?'':' ph'}">${k.name?esc(k.name):(sample?'학생'+k.no:'')}</td>`;let tot=0,any=false,ci=0;
+    P.areas.forEach((a,ai)=>{let s=0,has=false;
+      a.items.forEach((it,ii)=>{let v='';
+        if(sample&&!absent&&it.list){const L=it.list.filter(x=>x>0||!S.allowZero);v=L[Math.floor(Math.pow(pseudo(ri+1,ai*7+ii+1),1.6)*L.length)]}
+        if(v!==''){s+=v;has=true;(colVals[ci]=colVals[ci]||[]).push(v)}
+        row+=`<td class="num ${colCls[ci]}">${v}</td>`;ci++});
+      if(has){(colVals[ci]=colVals[ci]||[]).push(s);tot+=s;any=true}
+      row+=`<td class="num ${colCls[ci]}">${has?r2(s):''}</td>`;ci++});
+    if(any)(colVals[ci]=colVals[ci]||[]).push(tot);
+    row+=`<td class="total num">${any?r2(tot):''}</td></tr>`;body+=row});
+  const total=P.areas.reduce((n,a)=>n+a.items.length+1,0)+1;
+  let foot='<tr><td colspan="2">평균</td>';
+  for(let i=0;i<total;i++){const v=colVals[i];const avg=v&&v.length?(v.reduce((x,y)=>x+y,0)/v.length).toFixed(1):'';
+    foot+=`<td class="${i===total-1?'total':colCls[i]}">${avg}</td>`}
+  foot+='</tr>';
+  $('sheet').innerHTML=`<span class="pv-grade ${gcls(P.g)}" style="margin-top:12px">${esc(P.g.grade)}학년 수행평가 · ${P.areas.length}개 영역</span><div class="sheet-title">${esc(P.title)}</div><div class="sheet-sub">${esc(P.sub)}</div>
+    <table class="x"><thead>${h1}${h2}${h3}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table>
+    <div class="sig">@yemusict</div>`;
+}
+
+/* ---------- 엑셀 ---------- */
+function colL(n){let s='';while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s}
+function buildWorkbook(){
+  const wb=new ExcelJS.Workbook();wb.creator='@yemusict';wb.created=new Date();
+  const used={};
+  const thin={style:'thin',color:{argb:'FF8FA39A'}};
+  const B={top:thin,left:thin,bottom:thin,right:thin};
+  const F=(argb)=>({type:'pattern',pattern:'solid',fgColor:{argb}});
+  const font={name:'맑은 고딕',size:10};
+  S.grades.forEach((g,gi)=>{for(let c=1;c<=classes(g);c++){
+    const P=plan(gi,c);
+    let nm=P.sheetName.replace(/[\[\]:*?\/\\]/g,'').slice(0,28);if(used[nm]){used[nm]++;nm=nm+' ('+used[nm]+')'}else used[nm]=1;
+    const ws=wb.addWorksheet(nm,{properties:{tabColor:{argb:({1:'FF245C49',2:'FF2B4F8A',3:'FF8A4B1F'})[Math.min(3,Math.max(1,+g.grade||1))]}},
+      views:[{state:'frozen',xSplit:2,ySplit:6}],
+      pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,horizontalCentered:true,
+        margins:{left:.4,right:.4,top:.5,bottom:.5,header:.2,footer:.2},printTitlesRow:'4:6'}});
+    ws.headerFooter.oddFooter='&8&K808080@yemusict&R&8&P / &N';
+    // 열 배치
+    const cols=[];let col=3;
+    P.areas.forEach((a,ai)=>{const start=col;const items=a.items.map(it=>({it,col:col++}));cols.push({a,p:AP[ai%6],start,items,sum:col++})});
+    const totCol=col;const last=totCol;
+    const colP={};cols.forEach(cg=>{cg.items.forEach(x=>colP[x.col]={p:cg.p,sum:false});colP[cg.sum]={p:cg.p,sum:true}});
+    const R0=7,R1=R0+P.kids.length-1,AVG=R1+1;
+    ws.getColumn(1).width=6;ws.getColumn(2).width=11;
+    for(let i=3;i<=last;i++)ws.getColumn(i).width=10;
+    // 제목
+    ws.mergeCells(1,1,1,last);const t=ws.getCell(1,1);t.value=P.title;t.font={name:'맑은 고딕',size:15,bold:true};t.alignment={vertical:'middle'};ws.getRow(1).height=28;
+    ws.mergeCells(2,1,2,last);const s=ws.getCell(2,1);s.value=P.sub;s.font={...font,size:10,color:{argb:'FF5D6C65'}};
+    // 머리글
+    const hdr=(r,cl,v,opt={})=>{const cell=ws.getCell(r,cl);cell.value=v;cell.font={...font,bold:opt.bold!==false,size:opt.size||10,color:{argb:opt.color||'FF18241F'}};
+      cell.alignment={horizontal:'center',vertical:'middle',wrapText:true};cell.fill=F(opt.fill||'FFE1EDE7');cell.border=B};
+    ws.mergeCells(4,1,6,1);hdr(4,1,'번호');ws.mergeCells(4,2,6,2);hdr(4,2,'이름');
+    cols.forEach(cg=>{
+      if(cg.sum>cg.start)ws.mergeCells(4,cg.start,4,cg.sum);hdr(4,cg.start,cg.a.name,{size:11,fill:cg.p.sh});
+      cg.items.forEach(x=>{hdr(5,x.col,x.it.name,{fill:cg.p.h});
+        hdr(6,x.col,isFinite(x.it.max)?`${x.it.max}~${x.it.min}점\n(급간 ${x.it.step})`:'-',{bold:false,size:9,color:'FF5D6C65',fill:cg.p.h})});
+      hdr(5,cg.sum,'소계',{fill:cg.p.sh});hdr(6,cg.sum,`만점 ${cg.a.max}`,{bold:false,size:9,fill:cg.p.sh});
+      for(let cl=cg.start+1;cl<=cg.sum;cl++){ws.getCell(4,cl).fill=F(cg.p.sh)}
+    });
+    ws.mergeCells(4,totCol,5,totCol);hdr(4,totCol,'총점',{fill:'FFFBE8E3',color:'FFC8412B',size:11});
+    hdr(6,totCol,`만점 ${P.grand}`,{bold:false,size:9,fill:'FFFBE8E3',color:'FFC8412B'});
+    for(let i=1;i<=last;i++)for(let r=4;r<=6;r++){const cell=ws.getCell(r,i);cell.border=B;if(!cell.fill)cell.fill=F('FFE1EDE7')}
+    ws.getRow(4).height=22;ws.getRow(5).height=22;ws.getRow(6).height=30;
+    // 학생 행
+    const itemRefs=(r)=>cols.map(cg=>`${colL(cg.items[0].col)}${r}:${colL(cg.items[cg.items.length-1].col)}${r}`).join(',');
+    P.kids.forEach((k,i)=>{const r=R0+i;
+      const a=ws.getCell(r,1);a.value=k.no;const n=ws.getCell(r,2);n.value=k.name||null;
+      cols.forEach(cg=>{
+        cg.items.forEach(x=>{const cell=ws.getCell(r,x.col);cell.fill=F(cg.p.c);
+          if(x.it.list){const csv=x.it.list.join(',');if(csv.length<250)cell.dataValidation={type:'list',allowBlank:true,formulae:[`"${csv}"`],
+            showErrorMessage:true,errorStyle:'stop',errorTitle:'점수 확인',error:`${x.it.name}: ${x.it.list.join(', ')} 중에서 선택하세요.`,
+            showInputMessage:false}}});
+        const rg=`${colL(cg.items[0].col)}${r}:${colL(cg.items[cg.items.length-1].col)}${r}`;
+        const sc=ws.getCell(r,cg.sum);sc.value={formula:`IF(COUNT(${rg})=0,"",SUM(${rg}))`};sc.fill=F(cg.p.s);sc.font={...font,bold:true}});
+      const tc=ws.getCell(r,totCol);const refs=itemRefs(r);
+      tc.value={formula:`IF(COUNT(${refs})=0,"",SUM(${refs}))`};tc.fill=F('FFFDF3F0');tc.font={...font,bold:true,color:{argb:'FFC8412B'}};
+      for(let cl=1;cl<=last;cl++){const cell=ws.getCell(r,cl);cell.border=B;if(!cell.font||!cell.font.bold)cell.font=font;
+        cell.alignment={horizontal:cl===2?'left':'center',vertical:'middle'}}
+      if(i%5===4)for(let cl=1;cl<=last;cl++){ws.getCell(r,cl).border={...B,bottom:{style:'thin',color:{argb:'FF245C49'}}}}
+    });
+    // 평균 행
+    ws.mergeCells(AVG,1,AVG,2);const av=ws.getCell(AVG,1);av.value='평균';
+    for(let cl=3;cl<=last;cl++){const L=colL(cl);ws.getCell(AVG,cl).value={formula:`IFERROR(AVERAGE(${L}${R0}:${L}${R1}),"")`}}
+    for(let cl=1;cl<=last;cl++){const cell=ws.getCell(AVG,cl);cell.border={...B,top:{style:'medium',color:{argb:'FF245C49'}}};
+      cell.fill=F(cl===totCol?'FFFBE8E3':colP[cl]?(colP[cl].sum?colP[cl].p.sh:colP[cl].p.h):'FFE1EDE7');cell.font={...font,bold:true,color:{argb:cl===totCol?'FFC8412B':'FF18241F'}};
+      cell.alignment={horizontal:'center',vertical:'middle'};if(cl>2)cell.numFmt='0.0'}
+    ws.getRow(AVG).height=20;
+    // 서명
+    const sg=ws.getCell(AVG+2,1);sg.value='@yemusict';sg.font={name:'맑은 고딕',size:8,color:{argb:'FF9AABA3'}};
+  }});
+  return wb;
+}
+
+/* ---------- 내려받기 ---------- */
+let dlP=null;
+function getDownloads(){if(!dlP)dlP=(window.claude&&typeof window.claude.use==='function')?window.claude.use('downloads').catch(()=>null):Promise.resolve(undefined);return dlP}
+getDownloads();
+function setStatus(t,cls){const s=$('status');s.textContent=t;s.className='status'+(cls?' '+cls:'')}
+async function download(){
+  if(typeof ExcelJS==='undefined'){setStatus('엑셀 도구를 불러오지 못했어요. 인터넷 연결을 확인한 뒤 새로고침해 주세요.','bad');return}
+  const btn=$('dlBtn');btn.disabled=true;setStatus('파일을 만드는 중…');
+  try{
+    const wb=buildWorkbook();const buf=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const fname=`${S.year}_${S.school||'학교'}_${S.subject||'교과'}_수행평가점수표.xlsx`.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'');
+    const sheets=wb.worksheets.length;
+    const dl=await getDownloads();
+    if(dl===undefined){ // 일반 웹페이지로 열었을 때
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),4000);setStatus(`${fname} 저장 완료 · 시트 ${sheets}개`,'ok');
+    }else if(dl===null){setStatus('이 화면에서는 파일 저장을 쓸 수 없어요. 앱 링크를 브라우저에서 다시 열어 주세요.','bad');
+    }else{
+      try{await dl.save({filename:fname,data:blob});setStatus(`${fname} 저장 완료 · 시트 ${sheets}개`,'ok')}
+      catch(e){const code=e&&e.code;
+        setStatus(code==='declined'?'저장을 취소했어요. 다시 누르면 언제든 받을 수 있어요.':code==='rate_limited'?'저장 창이 이미 열려 있어요. 잠시 뒤 다시 눌러 주세요.':'이 화면에서는 파일 저장을 쓸 수 없어요.','bad')}
+    }
+  }catch(e){setStatus('파일을 만들다 문제가 생겼어요: '+(e&&e.message||e),'bad')}
+  finally{btn.disabled=false}
+}
+
+/* ---------- 이벤트 ---------- */
+function renderAll(){
+  $('f-year').value=S.year;$('f-school').value=S.school;$('f-subject').value=S.subject;$('f-teacher').value=S.teacher;$('f-zero').checked=!!S.allowZero;
+  renderTabs();renderGradePanel();renderAreas();renderStats();renderPreview();
+}
+let pvT;function soon(){clearTimeout(pvT);pvT=setTimeout(()=>{renderStats();renderTabs();renderPreview()},120)}
+
+document.addEventListener('input',e=>{
+  const el=e.target,f=el.dataset.f;if(!f)return;const g=S.grades[ui.g];
+  if(f==='base'){S[el.dataset.k]=el.type==='checkbox'?el.checked:el.value;if(el.dataset.k==='allowZero')refreshAreaDerived()}
+  else if(f==='grade'){g[el.dataset.k]=el.type==='number'?el.value:+el.value;renderTabs();
+    if(el.dataset.k!=='grade'){const rc=$('g-rcls');if(rc)rc.innerHTML=rosterOpts(g,Math.min(ui.rosterCls[ui.g],classes(g)))}else{refreshAreaDerived()}}
+  else if(f==='roster'){g.rosters=g.rosters||{};g.rosters[ui.rosterCls[ui.g]]=el.value;const rc=$('g-rcls');if(rc)rc.innerHTML=rosterOpts(g,ui.rosterCls[ui.g]);ui.pv=ui.g+'-'+ui.rosterCls[ui.g]}
+  else if(f==='area'){g.areas[+el.dataset.a].name=el.value}
+  else if(f==='item'){g.areas[+el.dataset.a].items[+el.dataset.i][el.dataset.k]=el.value;refreshAreaDerived()}
+  save();soon();
+});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.id==='g-rcls'){ui.rosterCls[ui.g]=+el.value;const g=S.grades[ui.g];$('g-roster').value=(g.rosters||{})[+el.value]||'';ui.pv=ui.g+'-'+el.value;renderPreview()}
+  if(el.id==='pv-sample')renderPreview();
+  if(el.id==='g-classes'||el.id==='g-students'){const g=S.grades[ui.g];g.classes=classes(g);g.students=intIn(g.students,1,60,25);renderGradePanel();renderTabs();soon();save()}
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b||b.tagName==='SELECT')return;const act=b.dataset.act;const g=S.grades[ui.g];
+  const a=+b.dataset.a,i=+b.dataset.i;
+  if(act==='tab'){ui.g=+b.dataset.gi;ui.pv=ui.g+'-1';renderTabs();renderGradePanel();renderAreas();renderPreview();return}
+  if(act==='pv'){ui.pv=b.dataset.k;const gi=+ui.pv.split('-')[0];if(gi!==ui.g){ui.g=gi;renderTabs();renderGradePanel();renderAreas()}renderPreview();return}
+  if(act==='addGrade'){const used=S.grades.map(x=>+x.grade);const nx=[1,2,3].find(n=>!used.includes(n))||3;
+    S.grades.push({grade:nx,classes:4,students:28,rosters:{},areas:[{name:'새 영역',items:[{name:'세부항목',max:10,min:2,step:2}]}]});ui.g=S.grades.length-1;ui.pv=ui.g+'-1';renderAll();
+    $('zone').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})}
+  else if(act==='delGrade'){S.grades.splice(ui.g,1);ui.g=0;ui.pv='0-1';renderAll()}
+  else if(act==='clearRoster'){g.rosters=g.rosters||{};delete g.rosters[ui.rosterCls[ui.g]];renderGradePanel();soon()}
+  else if(act==='addArea'){g.areas.push({name:'새 영역',items:[{name:'세부항목',max:10,min:2,step:2}]});renderAreas();soon();
+    const inp=$('a-'+(g.areas.length-1));if(inp){inp.focus();inp.select()}}
+  else if(act==='delArea'){g.areas.splice(a,1);if(!g.areas.length)g.areas.push({name:'영역',items:[{name:'세부항목',max:10,min:2,step:2}]});renderAreas();soon()}
+  else if(act==='addItem'){g.areas[a].items.push({name:'세부항목',max:10,min:2,step:2});renderAreas();soon();
+    const inp=$(`i-${a}-${g.areas[a].items.length-1}-name`);if(inp){inp.focus();inp.select()}}
+  else if(act==='delItem'){if(g.areas[a].items.length>1){g.areas[a].items.splice(i,1);renderAreas();soon()}}
+  else if(act==='copyAreas'){const from=+$('copyFrom').value;g.areas=JSON.parse(JSON.stringify(S.grades[from].areas));renderAreas();soon()}
+  else return;
+  save();
+});
+$('dlBtn').addEventListener('click',download);
+renderAll();
+})();
+</script>
+
+</body>
+</html>
