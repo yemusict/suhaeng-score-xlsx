@@ -108,8 +108,14 @@ h1 .mark{color:var(--pen)}
 .ph h2{font-family:var(--display);font-weight:400;font-size:28px;margin:0;line-height:1.2}
 .ph p{margin:4px 0 0;color:var(--muted);max-width:62ch}
 .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
-label.f{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weight:600;min-width:0}
-label.f small{font-weight:400;color:var(--muted)}
+.f{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weight:600;min-width:0}
+.f small{font-weight:400;color:var(--muted)}
+.segctl{display:flex;border:1px solid var(--line-strong);border-radius:6px;overflow:hidden;background:var(--paper)}
+.segctl label{flex:1;display:flex;align-items:center;justify-content:center;min-height:42px;padding:0 14px;cursor:pointer;font-weight:600;color:var(--muted);position:relative}
+.segctl label+label{border-left:1px solid var(--line-strong)}
+.segctl input{position:absolute;opacity:0;width:1px;height:1px;min-height:0;pointer-events:none}
+.segctl label:has(input:checked){background:var(--green);color:var(--paper)}
+.segctl label:has(input:focus-visible){outline:3px solid var(--pen);outline-offset:-3px}
 .check{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
 
 .titlebox{border:1px dashed var(--line-strong);border-radius:8px;padding:16px 18px;background:var(--green-tint);display:flex;flex-direction:column;gap:4px}
@@ -144,6 +150,15 @@ label.f small{font-weight:400;color:var(--muted)}
 .cbox input{width:62px;border:0;border-left:1px solid var(--line);border-right:1px solid var(--line);border-radius:0;text-align:center;font-size:18px;font-weight:600;min-height:44px}
 .cwrap .cu{color:var(--muted);font-size:14px}
 
+.cpw{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.cpick{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cp{min-width:60px;min-height:44px;border:2px solid var(--line-strong);background:var(--paper);border-radius:8px;font-weight:700;font-size:15px;color:var(--muted);padding:0 10px}
+.cp:hover{border-color:var(--gc);color:var(--gc)}
+.cp[aria-pressed="true"]{background:var(--gc);border-color:var(--gc);color:var(--paper)}
+.cp[aria-pressed="true"]::before{content:"✓ "}
+.cp-q{display:flex;gap:6px;margin-left:auto}
+.cp-q .btn{min-height:36px;padding:4px 10px;font-size:13px}
+.warnline{color:var(--pen);font-weight:700}
 .rl{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
 .rl-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
 .rl-h b{font-size:15px}
@@ -303,15 +318,17 @@ footer.foot{font-family:var(--mono);font-size:11px;color:var(--muted);text-align
 const KEY='suhaeng-xlsx-v2', OLD='suhaeng-xlsx-v1', UIKEY='suhaeng-xlsx-ui';
 const GN=[1,2,3];
 const STARTER=()=>[{name:'영역 1',items:[{name:'세부항목 1',max:10,min:2,step:2}]}];
-function defaults(){return {year:new Date().getFullYear(),school:'한빛중학교',subject:'음악',teacher:'',allowZero:false,grades:{
-  1:{on:true,classes:4,students:28,rosters:{},areas:[
+function defYear(){const d=new Date();return d.getMonth()<2?d.getFullYear()-1:d.getFullYear()}
+function defTerm(){const m=new Date().getMonth()+1;return (m>=3&&m<=7)?'1':'2'}
+function defaults(){return {year:defYear(),term:defTerm(),school:'한빛중학교',subject:'음악',teacher:'',allowZero:false,grades:{
+  1:{on:true,total:8,cls:[1,2,3,4],students:28,rosters:{},areas:[
     {name:'가창',items:[{name:'음정·박자',max:10,min:4,step:2},{name:'발성·표현',max:10,min:4,step:2}]},
     {name:'기악',items:[{name:'리코더 연주',max:20,min:8,step:3}]},
     {name:'감상문',items:[{name:'내용 이해',max:5,min:1,step:1},{name:'느낌 표현',max:5,min:1,step:1}]}]},
-  2:{on:true,classes:5,students:27,rosters:{},areas:[
+  2:{on:true,total:8,cls:[4,5,6],students:27,rosters:{},areas:[
     {name:'합창',items:[{name:'화음 유지',max:15,min:6,step:3},{name:'협동·태도',max:5,min:1,step:1}]},
     {name:'창작',items:[{name:'가락 짓기',max:20,min:8,step:4},{name:'악보 기보',max:10,min:4,step:2}]}]},
-  3:{on:false,classes:4,students:28,rosters:{},areas:STARTER()}}}}
+  3:{on:false,total:8,cls:[1,2,3,4],students:28,rosters:{},areas:STARTER()}}}}
 function load(){
   let s=null;try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
   if(s&&s.grades&&GN.every(n=>s.grades[n]&&Array.isArray(s.grades[n].areas)))return s;
@@ -323,6 +340,13 @@ function load(){
       d.grades[n]={on:true,classes:g.classes,students:g.students,rosters:g.rosters||{},areas:(g.areas&&g.areas.length)?g.areas:STARTER()}});
   }
   return d;
+}
+function normalize(s){ // 이전 버전 저장값(반 수만 있던 형식)을 반 고르기 형식으로
+  if(s.term!=='1'&&s.term!=='2')s.term=defTerm();
+  GN.forEach(n=>{const g=s.grades[n];
+    if(!Array.isArray(g.cls)){const k=intIn(g.classes,1,20,4);g.total=Math.max(k,8);g.cls=Array.from({length:k},(_,i)=>i+1)}
+    g.total=intIn(g.total,1,20,8);delete g.classes});
+  return s;
 }
 let S=load();
 let ui={step:1,g:1,open:null,pv:null,sample:true};
@@ -338,7 +362,19 @@ let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localSto
 
 const G=n=>S.grades[n];
 const on=()=>GN.filter(n=>G(n).on);
-const classes=g=>intIn(g.classes,1,20,1);
+const total=g=>intIn(g.total,1,20,8);
+const clsList=g=>[...new Set((g.cls||[]).map(Number))].filter(c=>c>=1&&c<=total(g)).sort((a,b)=>a-b);
+const classes=g=>clsList(g).length;
+function clsLabel(list){ // [1,2,3,4]→1~4반, [4,5,6]→4~6반, [1,3,5]→1·3·5반
+  if(!list.length)return '고른 반 없음';
+  const seg=[];let st=list[0],pv=list[0];
+  for(let i=1;i<=list.length;i++){const c=list[i];if(c===pv+1){pv=c;continue}
+    seg.push(pv-st>=2?`${st}~${pv}`:st===pv?`${st}`:`${st}·${pv}`);st=pv=c}
+  return seg.join('·')+'반';
+}
+const termTxt=()=>S.term?`${S.term}학기`:'';
+const noCls=()=>on().filter(n=>!classes(G(n)));
+S=normalize(S);
 const arc=ai=>'ar'+(ai%6+1);
 const AP=[ // 엑셀 영역 색 (.ar1~6과 같은 순서)
   {h:'FFDCEFE3',c:'FFF4FAF6',sh:'FFC2E1CD',s:'FFE6F3EA'},{h:'FFDCE8F7',c:'FFF4F8FD',sh:'FFC3D6F0',s:'FFE5EEFA'},
@@ -383,18 +419,18 @@ function issues(){
   return out;
 }
 const sheetCount=()=>on().reduce((s,n)=>s+classes(G(n)),0);
-const kidCount=()=>on().reduce((s,n)=>{let k=0;for(let c=1;c<=classes(G(n));c++)k+=students(G(n),c).length;return s+k},0);
+const kidCount=()=>on().reduce((s,n)=>s+clsList(G(n)).reduce((k,c)=>k+students(G(n),c).length,0),0);
 
 /* ---------- 진행 표시 · 아래 막대 ---------- */
 const STEPS=['기본 정보','학년과 반','평가 항목','확인·내려받기'],SHORT=['기본 정보','학년·반','평가 항목','내려받기'];
 function stepSub(i){
-  if(i===1)return `${esc(S.year)}학년도 ${esc(S.subject||'')}`;
+  if(i===1)return `${esc(S.year)}학년도 ${termTxt()} ${esc(S.subject||'')}`;
   if(i===2)return on().length?`${on().map(n=>n+'학년').join('·')} · ${sheetCount()}개 반`:'학년을 골라 주세요';
   if(i===3){const k=issues().length;return k?`고칠 곳 ${k}개`:on().map(n=>`${n}학년 ${gradeMax(G(n))}점`).join(' · ')||'—'}
   return `시트 ${sheetCount()}개 · 학생 ${kidCount()}명`;
 }
 function stepState(i){
-  if(i===2&&!on().length)return 'warn';
+  if(i===2&&(!on().length||noCls().length))return 'warn';
   if(i===3&&issues().length)return 'warn';
   return i<ui.step?'done':'';
 }
@@ -405,11 +441,11 @@ function renderStepper(){
 }
 function renderNav(){
   const s=ui.step;
-  const blocked=s===2&&!on().length;
+  const blocked=s===2&&(!on().length||noCls().length>0);
   $('navbar').innerHTML=
     (s>1?`<button type="button" class="nav-prev" data-act="prev">← 이전</button>`:'<span></span>')+
     `<span class="pos">${s} / 4 · ${STEPS[s-1]}</span>`+
-    (blocked?`<span class="nav-hint">학년을 하나 이상 골라 주세요</span>`:'')+
+    (blocked?`<span class="nav-hint">${on().length?`${noCls().join('·')}학년 수업 반을 골라 주세요`:'학년을 하나 이상 골라 주세요'}</span>`:'')+
     (s<4?`<button type="button" class="nav-next" data-act="next" ${blocked?'disabled':''}>다음: ${STEPS[s]} →</button>`:'');
 }
 const ph=(n,title,desc)=>`<div class="ph"><span class="ph-n">STEP ${n} / 4</span><h2>${title}</h2><p>${desc}</p></div>`;
@@ -420,22 +456,23 @@ function view1(){
     ${ph(1,'기본 정보','엑셀 시트 맨 위 제목에 들어갈 내용이에요. 처음에는 예시 값이 들어 있으니 우리 학교에 맞게 바꿔 주세요.')}
     <div class="fields">
       <label class="f">학년도<input id="f-year" type="number" inputmode="numeric" data-f="base" data-k="year" value="${esc(S.year)}"></label>
+      <div class="f"><span>학기</span><div class="segctl" role="radiogroup" aria-label="학기">${['1','2'].map(t=>`<label><input type="radio" name="term" id="f-term-${t}" value="${t}" data-f="base" data-k="term" ${S.term===t?'checked':''}>${t}학기</label>`).join('')}</div></div>
       <label class="f">학교명<input id="f-school" type="text" data-f="base" data-k="school" value="${esc(S.school)}" placeholder="예: 한빛중학교"></label>
       <label class="f">교과<input id="f-subject" type="text" data-f="base" data-k="subject" value="${esc(S.subject)}" placeholder="예: 음악"></label>
-      <label class="f">담당 교사 <small>(비워도 돼요)</small><input id="f-teacher" type="text" data-f="base" data-k="teacher" value="${esc(S.teacher)}" placeholder="이름"></label>
+      <label class="f"><span>담당 교사 <small>(선택)</small></span><input id="f-teacher" type="text" data-f="base" data-k="teacher" value="${esc(S.teacher)}" placeholder="이름"></label>
     </div>
     <div class="titlebox"><span class="tb-l">엑셀 시트에는 이렇게 들어가요</span><div class="tb-t" id="tb-t"></div><div class="tb-s" id="tb-s"></div></div>
   </section>`;
 }
 function refresh1(){
   const n=on()[0]||1;
-  if($('tb-t'))$('tb-t').textContent=`${S.year}학년도 ${S.subject||''} 수행평가 점수표`.replace(/\s+/g,' ');
-  if($('tb-s'))$('tb-s').textContent=[S.school||'학교명',`${n}학년 1반`,S.teacher?`담당 ${S.teacher}`:''].filter(Boolean).join(' · ');
+  if($('tb-t'))$('tb-t').textContent=`${S.year}학년도 ${termTxt()} ${S.subject||''} 수행평가 점수표`.replace(/\s+/g,' ');
+  if($('tb-s'))$('tb-s').textContent=[S.school||'학교명',`${n}학년 ${clsList(G(n))[0]||1}반`,S.teacher?`담당 ${S.teacher}`:''].filter(Boolean).join(' · ');
 }
 
 /* ---------- 2단계 ---------- */
 function counter(n,k,label,hint,unit,lo,hi){
-  const g=G(n),v=k==='classes'?classes(g):intIn(g.students,1,60,25);
+  const g=G(n),v=k==='total'?total(g):intIn(g.students,1,60,25);
   return `<div class="counter"><span class="cl">${label}${hint?` <small>${hint}</small>`:''}</span>
     <div class="cwrap"><div class="cbox">
       <button type="button" data-act="inc" data-g="${n}" data-k="${k}" data-d="-1" aria-label="${label} 줄이기" ${v<=lo?'disabled':''}>−</button>
@@ -449,33 +486,38 @@ function view2(){
   return `<section class="panel">
     ${ph(2,'학년과 반','수업 들어가는 학년을 모두 눌러 고르세요. 반마다 엑셀 시트가 하나씩 만들어져요.')}
     <div class="gpick">${GN.map(n=>`<button type="button" class="gtog gc${n}" data-act="tog" data-g="${n}" aria-pressed="${G(n).on}">
-      <b>${n}학년</b><span>${G(n).on?`${classes(G(n))}개 반`:'누르면 추가돼요'}</span></button>`).join('')}</div>
+      <b>${n}학년</b><span>${G(n).on?clsLabel(clsList(G(n))):'누르면 추가돼요'}</span></button>`).join('')}</div>
     ${list.length?list.map(n=>{const g=G(n);
       return `<div class="gbox gc${n}">
-        <div class="gbox-h"><span class="badge">${n}학년</span><span class="info">엑셀 시트 <b id="gsheets-${n}">${classes(g)}개</b>가 만들어져요</span></div>
+        <div class="gbox-h"><span class="badge">${n}학년</span><span class="info">${classes(g)?`엑셀 시트 <b>${classes(g)}개</b>(${clsLabel(clsList(g))})가 만들어져요`:`<span class="warnline">수업 들어가는 반을 골라 주세요</span>`}</span></div>
         <div class="counters">
-          ${counter(n,'classes','반 수','','개 반',1,20)}
+          ${counter(n,'total','이 학년 전체 반 수','(우리 학교 기준)','개 반',1,20)}
           ${counter(n,'students','반별 학생 수','(명렬을 안 넣은 반에 쓰여요)','명',1,60)}
         </div>
-        <div class="rl">
+        <div class="cpw">
+          <div class="rl-h"><b>수업 들어가는 반</b><small>눌러서 고르세요. 고른 반만 엑셀 시트가 만들어져요.</small></div>
+          <div class="cpick">${Array.from({length:total(g)},(_,i)=>{const c=i+1;return `<button type="button" class="cp" data-act="pickCls" data-g="${n}" data-c="${c}" aria-pressed="${clsList(g).includes(c)}">${c}반</button>`}).join('')}
+            <span class="cp-q"><button type="button" class="btn" data-act="allCls" data-g="${n}" data-v="1">모두 고르기</button><button type="button" class="btn" data-act="allCls" data-g="${n}" data-v="0">모두 빼기</button></span></div>
+        </div>
+        ${classes(g)?`<div class="rl">
           <div class="rl-h"><b>학생 명렬</b><small>선택 사항 · 반을 눌러 번호와 이름을 붙여넣으세요. 안 넣으면 번호만 있는 빈 칸으로 만들어져요.</small></div>
-          <div class="cls">${Array.from({length:classes(g)},(_,i)=>{const c=i+1,open=ui.open===n+'-'+c,has=parseRoster(g.rosters&&g.rosters[c]).length>0;
+          <div class="cls">${clsList(g).map(c=>{const open=ui.open===n+'-'+c,has=parseRoster(g.rosters&&g.rosters[c]).length>0;
             return `<button type="button" class="cchip${open?' on':''}${has?' has':''}" data-act="openRoster" data-g="${n}" data-c="${c}" aria-expanded="${open}"><b>${c}반</b><small id="cls-${n}-${c}">${chipText(g,c)}</small></button>`}).join('')}</div>
           ${rosterEditor(n)}
-        </div>
+        </div>`:''}
       </div>`}).join(''):`<div class="empty">위에서 학년을 하나 이상 골라 주세요.</div>`}
   </section>`;
 }
 function rosterEditor(n){
   if(!ui.open||!ui.open.startsWith(n+'-'))return '';
-  const c=+ui.open.split('-')[1],g=G(n);if(c>classes(g))return '';
+  const c=+ui.open.split('-')[1],g=G(n),L=clsList(g),nx=L[L.indexOf(c)+1];if(!L.includes(c))return '';
   return `<div class="redit">
     <div class="redit-h"><b>${n}학년 ${c}반 명렬</b><small>나이스나 엑셀에서 <b>번호·이름 두 열</b>을 그대로 복사해 붙여넣으세요. 이름만 한 줄씩 넣어도 번호가 자동으로 붙어요.</small></div>
     <textarea id="roster-${n}-${c}" data-f="roster" data-g="${n}" data-c="${c}" placeholder="1&#9;김하늘&#10;2&#9;박도윤&#10;3&#9;이서연">${esc((g.rosters||{})[c]||'')}</textarea>
     <div class="redit-f"><span class="rcount" id="rcount-${n}-${c}">${rcount(g,c)}</span><span class="sp"></span>
       <button type="button" class="btn" data-act="clearRoster" data-g="${n}" data-c="${c}">비우기</button>
       <button type="button" class="btn" data-act="closeRoster">닫기</button>
-      ${c<classes(g)?`<button type="button" class="btn" data-act="openRoster" data-g="${n}" data-c="${c+1}" style="border-color:var(--gc);color:var(--gc);font-weight:700">다음 반 (${c+1}반) →</button>`:''}
+      ${nx?`<button type="button" class="btn" data-act="openRoster" data-g="${n}" data-c="${nx}" style="border-color:var(--gc);color:var(--gc);font-weight:700">다음 반 (${nx}반) →</button>`:''}
     </div></div>`;
 }
 function rcount(g,c){const r=parseRoster(g.rosters&&g.rosters[c]);if(!r.length)return '아직 비어 있어요';
@@ -491,7 +533,7 @@ function view3(){
     ${ph(3,'평가 항목','학년마다 평가 영역과 세부항목, 점수 범위를 정해요. 영역마다 엑셀 열 색이 달라져요.')}
     ${list.length>1?`<div class="gtabs" role="tablist" aria-label="학년">${list.map(x=>`<button type="button" class="gt gc${x}" role="tab" aria-selected="${x===n}" data-act="gtab" data-g="${x}">${x}학년<small id="gtt-${x}">${gradeMax(G(x))}점</small></button>`).join('')}</div>`:''}
     <div class="gbox gc${n}">
-      <div class="gbox-h"><span class="badge">${n}학년</span><span class="info">여기서 정한 평가는 <b>${n}학년 ${classes(g)}개 반</b>에 똑같이 들어가요</span></div>
+      <div class="gbox-h"><span class="badge">${n}학년</span><span class="info">여기서 정한 평가는 <b>${n}학년 ${clsLabel(clsList(g))}</b>에 똑같이 들어가요</span></div>
       <div class="mix" id="mix">${mixHTML(g)}</div>
       <div class="howto">점수 범위 정하는 법: 최고 <b>10</b> · 최저 <b>4</b> · 급간 <b>2</b>로 정하면 엑셀 칸에서 <b>10, 8, 6, 4점</b> 중에 골라 입력하게 돼요.</div>
       ${g.areas.map((a,ai)=>`<div class="area ${arc(ai)}">
@@ -545,7 +587,7 @@ function plan(n,c){
   const g=G(n);
   const areas=g.areas.map(a=>({name:a.name||'영역',max:areaMax(a),items:a.items.map(it=>({name:it.name||'항목',max:num(it.max),min:num(it.min),step:num(it.step),...scoreList(it)}))}));
   return {n,g,c,areas,kids:students(g,c),grand:gradeMax(g),sheetName:`${n}학년 ${c}반`,
-    title:`${S.year}학년도 ${S.subject||''} 수행평가 점수표`.replace(/\s+/g,' '),
+    title:`${S.year}학년도 ${termTxt()} ${S.subject||''} 수행평가 점수표`.replace(/\s+/g,' '),
     sub:[S.school,`${n}학년 ${c}반`,S.teacher?`담당 ${S.teacher}`:''].filter(Boolean).join(' · ')};
 }
 function view4(){
@@ -554,7 +596,7 @@ function view4(){
   return `<section class="panel">
     ${ph(4,'확인하고 내려받기','반을 눌러 시트를 넘겨 보며 확인한 뒤 내려받으세요.')}
     <div class="sumrow"><span class="stat">엑셀 시트 <b>${sheetCount()}</b>개</span><span class="stat">학생 <b>${kidCount()}</b>명</span><span class="stat">파일 <b>1</b>개</span></div>
-    <div class="gsum">${list.map(n=>{const g=G(n);return `<div class="gs gc${n}"><div class="gs-h"><b>${n}학년</b><span>${classes(g)}개 반 · ${g.areas.length}개 영역</span></div>
+    <div class="gsum">${list.map(n=>{const g=G(n);return `<div class="gs gc${n}"><div class="gs-h"><b>${n}학년</b><span>${clsLabel(clsList(g))} · ${g.areas.length}개 영역</span></div>
       <ul>${g.areas.map(a=>`<li><span>${esc(a.name||'영역')}</span><em>${areaMax(a)}</em></li>`).join('')}<li class="t"><span>총점</span><em>${gradeMax(g)}점</em></li></ul></div>`}).join('')}</div>
     ${iss.length?`<div class="issues"><b>⚠ 점수 범위를 확인해 주세요 (${iss.length}곳)</b><ul>${iss.map(x=>`<li>${esc(x.text)}</li>`).join('')}</ul>
       <div><button type="button" class="btn" data-act="fix" data-g="${iss[0].n}">평가 항목 고치러 가기</button></div></div>`:''}
@@ -568,14 +610,15 @@ function view4(){
     </div>
   </section>`;
 }
-function fileName(){return `${S.year}_${S.school||'학교'}_${S.subject||'교과'}_수행평가점수표.xlsx`.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'')}
+function fileName(){return `${S.year}_${S.term}학기_${S.school||'학교'}_${S.subject||'교과'}_수행평가점수표.xlsx`.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'')}
 function pseudo(a,b){let x=Math.sin(a*12.9898+b*78.233)*43758.5453;return x-Math.floor(x)}
 function renderPreview(){
   if(ui.step!==4||!$('sheet'))return;
-  const keys=[];on().forEach(n=>{for(let c=1;c<=classes(G(n));c++)keys.push(n+'-'+c)});
+  const keys=[];on().forEach(n=>clsList(G(n)).forEach(c=>keys.push(n+'-'+c)));
+  if(!keys.length){$('ptabs').innerHTML='';$('sheet').innerHTML='<div class="empty" style="margin:16px">2단계에서 수업 들어가는 반을 골라 주세요.</div>';$('dlName').textContent='';return}
   if(!keys.includes(ui.pv))ui.pv=keys[0];
-  $('ptabs').innerHTML=on().map(n=>`<div class="pg gc${n}"><span class="pg-l">${n}학년</span>${Array.from({length:classes(G(n))},(_,i)=>{const k=n+'-'+(i+1);
-      return `<button type="button" class="ptab" data-act="pv" data-k="${k}" aria-selected="${k===ui.pv}">${i+1}반</button>`}).join('')}</div>`).join('')+
+  $('ptabs').innerHTML=on().map(n=>`<div class="pg gc${n}"><span class="pg-l">${n}학년</span>${clsList(G(n)).map(c=>{const k=n+'-'+c;
+      return `<button type="button" class="ptab" data-act="pv" data-k="${k}" aria-selected="${k===ui.pv}">${c}반</button>`}).join('')||'<span class="warnline" style="font-size:13px">반 없음</span>'}</div>`).join('')+
     `<label class="check"><input id="pv-sample" type="checkbox" ${ui.sample?'checked':''}> 예시 점수 넣어 보기</label>`;
   $('dlName').textContent=fileName();
   const [n,c]=ui.pv.split('-').map(Number);
@@ -617,7 +660,7 @@ function buildWorkbook(){
   const B={top:thin,left:thin,bottom:thin,right:thin};
   const F=argb=>({type:'pattern',pattern:'solid',fgColor:{argb}});
   const font={name:'맑은 고딕',size:10};
-  on().forEach(n=>{for(let c=1;c<=classes(G(n));c++){
+  on().forEach(n=>{for(const c of clsList(G(n))){
     const P=plan(n,c);
     const ws=wb.addWorksheet(P.sheetName,{properties:{tabColor:{argb:GTAB[n]}},
       views:[{state:'frozen',xSplit:2,ySplit:6}],
@@ -681,6 +724,7 @@ getDownloads();
 function setStatus(t,cls){const s=$('status');if(!s)return;s.textContent=t;s.className='status'+(cls?' '+cls:'')}
 async function download(){
   if(typeof ExcelJS==='undefined'){setStatus('엑셀 도구를 불러오지 못했어요. 인터넷 연결을 확인한 뒤 새로고침해 주세요.','bad');return}
+  if(!sheetCount()){setStatus('만들 시트가 없어요. 2단계에서 수업 들어가는 반을 골라 주세요.','bad');return}
   const btn=$('dlBtn');btn.disabled=true;setStatus('파일을 만드는 중…');
   try{
     const wb=buildWorkbook();const buf=await wb.xlsx.writeBuffer();
@@ -726,7 +770,7 @@ document.addEventListener('input',e=>{
   if(el.id==='pv-sample'){ui.sample=el.checked;renderPreview();save();return}
   if(!f)return;
   if(f==='base'){S[el.dataset.k]=el.type==='checkbox'?el.checked:el.value;refresh1();if(el.dataset.k==='allowZero')refresh3()}
-  else if(f==='gnum'){G(el.dataset.g)[el.dataset.k]=el.value;const s=$('gsheets-'+el.dataset.g);if(s)s.textContent=classes(G(el.dataset.g))+'개'}
+  else if(f==='gnum'){G(el.dataset.g)[el.dataset.k]=el.value}
   else if(f==='roster'){const g=G(el.dataset.g),c=el.dataset.c;g.rosters=g.rosters||{};g.rosters[c]=el.value;
     const ch=$(`cls-${el.dataset.g}-${c}`);if(ch){ch.textContent=chipText(g,c);ch.parentElement.classList.toggle('has',parseRoster(el.value).length>0)}
     const rc=$(`rcount-${el.dataset.g}-${c}`);if(rc){rc.textContent=rcount(g,c);rc.classList.toggle('none',!parseRoster(el.value).length)}}
@@ -736,7 +780,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{
   const el=e.target;
-  if(el.dataset.f==='gnum'){const g=G(el.dataset.g);g.classes=classes(g);g.students=intIn(g.students,1,60,25);render()}
+  if(el.dataset.f==='gnum'){const g=G(el.dataset.g);g.total=total(g);g.cls=clsList(g);g.students=intIn(g.students,1,60,25);render()}
 });
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
@@ -748,12 +792,15 @@ document.addEventListener('click',e=>{
     case 'tog':{const g=G(n);g.on=!g.on;if(g.on)ui.g=n;if(ui.open&&ui.open.startsWith(n+'-'))ui.open=null;render();
       if(!g.on)toast(`${n}학년을 뺐어요. 다시 누르면 설정이 그대로 돌아와요.`);break}
     case 'inc':{const g=G(n),k=b.dataset.k,d=+b.dataset.d;
-      if(k==='classes')g.classes=Math.min(20,Math.max(1,classes(g)+d));else g.students=Math.min(60,Math.max(1,intIn(g.students,1,60,25)+d));
+      if(k==='total'){g.total=Math.min(20,Math.max(1,total(g)+d));g.cls=clsList(g)}else g.students=Math.min(60,Math.max(1,intIn(g.students,1,60,25)+d));
       render();focusSel(`g${n}-${k}`);break}
     case 'openRoster':{const k=n+'-'+b.dataset.c;ui.open=(ui.open===k&&b.classList.contains('cchip'))?null:k;render();if(ui.open)$('roster-'+ui.open)?.focus();break}
     case 'closeRoster':ui.open=null;render();break;
     case 'clearRoster':{const c=b.dataset.c;undoable(`${n}학년 ${c}반 명렬을 비웠어요.`,()=>{delete G(n).rosters[c]});break}
     case 'gtab':ui.g=n;render();break;
+    case 'pickCls':{const g=G(n),c=+b.dataset.c,L=clsList(g);g.cls=L.includes(c)?L.filter(x=>x!==c):[...L,c].sort((x,y)=>x-y);
+      if(ui.open===n+'-'+c&&!g.cls.includes(c))ui.open=null;render();document.querySelector(`[data-act=pickCls][data-g="${n}"][data-c="${c}"]`)?.focus();break}
+    case 'allCls':{const g=G(n);g.cls=b.dataset.v==='1'?Array.from({length:total(g)},(_,i)=>i+1):[];if(ui.open&&ui.open.startsWith(n+'-')&&!g.cls.length)ui.open=null;render();break}
     case 'addArea':{const g=G(ui.g);g.areas.push({name:'',items:[{name:'',max:10,min:2,step:2}]});render();focusSel(`a-${ui.g}-${g.areas.length-1}`);break}
     case 'delArea':{const g=G(ui.g),nm=g.areas[a].name||`영역 ${a+1}`;undoable(`'${nm}' 영역을 지웠어요.`,()=>{g.areas.splice(a,1);if(!g.areas.length)g.areas=STARTER()});break}
     case 'addItem':{const g=G(ui.g);g.areas[a].items.push({name:'',max:10,min:2,step:2});render();focusSel(`i-${ui.g}-${a}-${g.areas[a].items.length-1}-name`);break}
